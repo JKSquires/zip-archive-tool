@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+<p>ZIP Archive Name: <textarea id="zip_name">archive.zip</textarea></p>
+<p>Path and File:
+<textarea id="input_path"></textarea>
+<input id="file_selector" type="file"></p>
+
+<button onclick="addFile()">Add Selected File</button>
+<p>Files to ZIP:</p>
+<ul id="file_display" style="border: 2px #000 solid; padding: 1em;"></ul>
+
+<button onclick="createZIPWithFile()">Create ZIP Archive</button>
+
+<script src="./zip_scripts.js"></script>
+</body>
+</html>
