@@ -3,19 +3,19 @@ const input_path = document.getElementById("input_path");
 const file_display = document.getElementById("file_display");
 const zip_name = document.getElementById("zip_name");
 
-const files_to_zip = []; // stores file data and names
+let files_to_zip = []; // stores files' data and names
 
 /* Creates ZIP file data as blob from inputted file data.
 Parameters:
-- files (Object[]): array of Objects that have the following properties:
-	- name (string): file name and path in ZIP file
-	- data (ArrayBuffer): file binary data
+- files (Object[]): Array of Objects that have the following properties:
+	- name (string): File path and name in ZIP file
+	- data (ArrayBuffer): File binary data
 Return: (Blob)
   ZIP file data as a blob */
 function createZIP(files) {
 	/* Calculates CRC-32 for inputted data.
 	Parameters:
-	- data (Uint8Array): data to use for CRC
+	- data (Uint8Array): Data to use for CRC
 	Return: (32-bit unsigned integer)
 	  CRC-32 value */
 	function calcCRC32(data) {
@@ -71,7 +71,7 @@ function createZIP(files) {
 		name: file.name,
 		data: file.data,
 		crc: calcCRC32(new Uint8Array(file.data)),
-		is_dir: false,
+		is_dir: file.name[file.name.length - 1] === "/",
 		local_header_offset: null
 	}));
 
@@ -174,44 +174,103 @@ function createZIP(files) {
 	return new Blob(zip_data);
 }
 
-/* Adds a new file to the files that will be put in a ZIP archive.
+/* Creates an Object that contains file name and data.
+Parameters:
+- n (string): File path and name in ZIP file
+- d (ArrayBuffer): File binary data
+Return: (Object):
+  Object with the following properties:
+  - name (string): File path and name in ZIP file
+  - data (ArrayBuffer): File binary data */
+function createFileDataObject(n, d) {
+	return {
+		name: n,
+		data: d
+	};
+}
+
+/* Updates the file display.
 Globals Used:
-- file_selector
-- input_path
 - files_to_zip
 - file_display
 Side-Effects:
-- Updates and sorts `files_to_zip` with new file data
+- Sorts `files_to_zip` by file name
 - Updates `file_display` inner HTML
+Return: (undefined) */
+function updateFileDisplay() {
+	files_to_zip.sort((a, b) => a.name.localeCompare(b.name));
+
+	file_display.innerHTML = "";
+
+	for (let i = 0; i < files_to_zip.length; i++) {
+		const item = document.createElement("li");
+
+		const remove_button = document.createElement("button");
+		remove_button.innerText = "Remove";
+		remove_button.addEventListener("click", () => {
+			files_to_zip = files_to_zip.filter((element, index) => index !== i);
+			updateFileDisplay();
+		});
+
+		item.append(remove_button, " " + files_to_zip[i].name);
+
+		file_display.append(item);
+	}
+}
+
+/* Formats path for file in ZIP archive.
+Globals Used:
+- input_path
+Return: (string)
+  Full path for file in ZIP archive, formatted */
+function determinePath() {
+	let path = input_path.value;
+
+	if (path.length !== 0 && path[path.length - 1] !== "/") {
+		path += "/";
+	}
+	
+	return path;
+}
+
+/* Adds a new file to the files that will be put in a ZIP archive.
+Globals Used:
+- file_selector
+- files_to_zip
+Side-Effects:
+- Updates `files_to_zip` with new file data
+- Calls `updateFileDisplay` function
 Return: (undefined) */
 function addFile() {
 	const file = file_selector.files[0];
 	const file_reader = new FileReader();
 
 	file_reader.onload = () => {
-		let path = input_path.value;
-		if (path.length !== 0 && path[path.length - 1] !== "/") {
-			path += "/";
-		}
+		const path = determinePath();
 
-		files_to_zip.push({
-			name: path + file.name,
-			data: file_reader.result
-		});
+		files_to_zip.push(createFileDataObject(path + file.name, file_reader.result));
 
-		files_to_zip.sort((a, b) => a.name.localeCompare(b.name));
-
-		// update file_display
-		let file_display_html = "";
-		for (const file_to_zip of files_to_zip) {
-			file_display_html += "<li>" + file_to_zip.name + "</li>"
-		}
-		file_display.innerHTML = file_display_html;
+		updateFileDisplay();
 	};
 
 	if (file) {
 		file_reader.readAsArrayBuffer(file);
 	}
+}
+
+/* Adds a new directory to the files that will be put in a ZIP archive.
+Globals Used:
+- files_to_zip
+Side-Effects:
+- Updates `files_to_zip` with new file data
+- Calls `updateFileDisplay` function
+Return: (undefined) */
+function addDirectory() {
+	const path = determinePath();
+
+	files_to_zip.push(createFileDataObject(path, new ArrayBuffer()));
+
+	updateFileDisplay();
 }
 
 /* Creates a ZIP archive containing the files the user inputted and downloads it.

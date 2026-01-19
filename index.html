@@ -3,7 +3,7 @@
 <head>
 <title>ZIP Archive Tool</title>
 
-<link rel="icon" type="image/png" href="/icon.png">
+<link rel="icon" type="image/png" href="../icon.png">
 </head>
 <body>
 <p>ZIP Archive Name: <textarea id="zip_name">archive.zip</textarea></p>
@@ -12,6 +12,7 @@
 <input id="file_selector" type="file"></p>
 
 <button onclick="addFile()">Add Selected File</button>
+<button onclick="addDirectory()">Add Inputted Directory <em>(not required)</em></button>
 <p>Files to ZIP:</p>
 <ul id="file_display" style="border: 2px #000 solid; padding: 1em;"></ul>
 
